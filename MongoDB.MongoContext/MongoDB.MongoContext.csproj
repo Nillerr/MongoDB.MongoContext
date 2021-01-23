@@ -3,22 +3,26 @@
     <PropertyGroup>
         <TargetFrameworks>netstandard1.5;netstandard2.0;netstandard2.1</TargetFrameworks>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <Version>1.0.0-alpha</Version>
+        <Version>1.0.0-alpha1</Version>
         <Description>
-            Like DbContext from Entity Framework, but with nowhere near the same features, and it's for MongoDB.
+Like DbContext from Entity Framework, but with nowhere near the same features, and it's for MongoDB.
 
-            Provides a context for performing operations on a MongoDB database, enabling transactions without manually  
-            passing `IClientSessionHandle` objects around, and provides access to every collection all in one place.
+Provides a context for performing operations on a MongoDB database, enabling transactions without manually passing IClientSessionHandle objects around, and provides access to every collection all in one place.
         </Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <RespositoryUrl>https://github.com/Nillerr/MongoDB.MongoContext.git</RespositoryUrl>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <PackageTags>mongo;mongodb;mongocontext;database;dbcontext</PackageTags>
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <Authors>nillerr</Authors>
     </PropertyGroup>
 
     <ItemGroup>
       <PackageReference Include="MongoDB.Driver" Version="2.11.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
     </ItemGroup>
 
     <PropertyGroup Condition="$(TargetFramework) == 'netstandard2.1'">
