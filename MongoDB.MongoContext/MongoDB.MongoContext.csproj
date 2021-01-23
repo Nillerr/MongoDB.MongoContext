@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFrameworks>netstandard1.5;netstandard2.0;netstandard2.1</TargetFrameworks>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <Version>1.0.0-alpha1</Version>
+        <Version>1.0.0-alpha2</Version>
         <Description>
 Like DbContext from Entity Framework, but with nowhere near the same features, and it's for MongoDB.
 
@@ -19,10 +19,15 @@ Provides a context for performing operations on a MongoDB database, enabling tra
 
     <ItemGroup>
       <PackageReference Include="MongoDB.Driver" Version="2.11.0" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="1.0.0" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
+      <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
     </ItemGroup>
 
     <PropertyGroup Condition="$(TargetFramework) == 'netstandard2.1'">
