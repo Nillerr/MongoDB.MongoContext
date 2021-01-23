@@ -10,7 +10,7 @@ public class DatabaseContext : MongoContext
 {
     public DatabaseContext(MongoContextOptions options) : base(options) {}
     
-    public IMongoCollection<Product> Products = Collection<Product>("products");
-    public IMongoCollection<Order> Orders = Collection<Order>("orders");
+    public IMongoCollection<Product> Products => Collection<Product>("products");
+    public IMongoCollection<Order> Orders => Collection<Order>("orders");
 }
 ```
