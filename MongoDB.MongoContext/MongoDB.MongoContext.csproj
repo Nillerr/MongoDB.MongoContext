@@ -10,6 +10,11 @@
             Provides a context for performing operations on a MongoDB database, enabling transactions without manually  
             passing `IClientSessionHandle` objects around, and provides access to every collection all in one place.
         </Description>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RespositoryUrl>https://github.com/Nillerr/MongoDB.MongoContext.git</RespositoryUrl>
+        <PackageTags>mongo;mongodb;mongocontext;database;dbcontext</PackageTags>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     </PropertyGroup>
 
     <ItemGroup>
