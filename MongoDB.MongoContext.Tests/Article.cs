@@ -14,5 +14,19 @@ namespace MongoDB.MongoContext.Tests
         public string Body { get; set; } = null!;
         
         public DateTime CreatedAt { get; set; }
+
+        #region ChangeTitle
+        
+        public void ChangeTitle(string title)
+        {
+            Append(new ArticleTitleChange(title), Apply);
+        }
+
+        private void Apply(ArticleTitleChange e)
+        {
+            Title = e.Title;
+        }
+        
+        #endregion
     }
 }

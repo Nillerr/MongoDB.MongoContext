@@ -60,8 +60,11 @@ namespace MongoDB.MongoContext
                 documentContext.OnSaveChanges(context);
             }
 
-            var options = new BulkWriteOptions { IsOrdered = true };
-            await Collection.BulkWriteAsync(_session, context.WriteModels, options, cancellationToken);
+            if (context.WriteModels.Count > 0)
+            {
+                var options = new BulkWriteOptions { IsOrdered = true };
+                await Collection.BulkWriteAsync(_session, context.WriteModels, options, cancellationToken);                
+            }
 
             return ct => OnChangesSavedAsync(context, ct);
         }
