@@ -19,7 +19,6 @@ namespace MongoDB.MongoContext
 
         private readonly IClientSessionHandle _session;
 
-        private readonly List<IMongoSetListener<TDocument>> _listeners;
         private readonly PrimaryKeyFilterSelector<TDocument> _primaryKeyFilterSelector;
         private readonly IReadOnlyList<IndexDefinition<TDocument>> _indexDefinitions;
 
@@ -27,14 +26,12 @@ namespace MongoDB.MongoContext
             MongoContext context,
             IMongoCollection<TDocument> collection,
             IClientSessionHandle session,
-            List<IMongoSetListener<TDocument>> listeners,
             MongoSetDefinition<TDocument> definition)
         {
             Context = context;
             Name = definition.Name;
             Collection = collection;
             _session = session;
-            _listeners = listeners;
             _primaryKeyFilterSelector = definition.PrimaryKeyFilterSelector;
             _indexDefinitions = definition.IndexDefinitions;
         }
@@ -66,21 +63,13 @@ namespace MongoDB.MongoContext
                 await Collection.BulkWriteAsync(_session, context.WriteModels, options, cancellationToken);                
             }
 
-            return ct => OnChangesSavedAsync(context, ct);
+            return ct => OnChangesSavedAsync();
         }
 
-        private async Task OnChangesSavedAsync(
-            SaveDocumentsChangesContext<TDocument> context,
-            CancellationToken cancellationToken)
+        private Task OnChangesSavedAsync()
         {
             UpdateTrackedDocuments();
-
-            var changesSavedContext = new ChangesSavedContext<TDocument>(context.Mutations);
-
-            foreach (var listener in _listeners)
-            {
-                await listener.OnEventsSavedAsync(changesSavedContext, cancellationToken);
-            }
+            return Task.CompletedTask;
         }
 
         private void UpdateTrackedDocuments()

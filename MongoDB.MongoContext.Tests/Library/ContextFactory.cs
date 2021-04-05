@@ -14,11 +14,11 @@ namespace MongoDB.MongoContext.Tests
 
         protected abstract TContext CreateContext(DatabaseContextOptions options);
 
-        public ContextFixture<TContext> CreateContextFixture(string name, params IMongoSetListenerFactory[] collectionListenerFactories)
+        public ContextFixture<TContext> CreateContextFixture(string name)
         {
             var client = CreateClient();
             var database = client.GetDatabase(name);
-            var options = new DatabaseContextOptions(database, collectionListenerFactories);
+            var options = new DatabaseContextOptions(database);
             var contextFixture = _contextFixtures.GetOrAdd(name, CreateContextFixture, options);
             return contextFixture;
         }

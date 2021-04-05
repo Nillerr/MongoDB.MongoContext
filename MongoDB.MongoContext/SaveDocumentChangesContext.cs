@@ -24,8 +24,8 @@ namespace MongoDB.MongoContext
             var state = _trackedDocument.State;
             var document = _trackedDocument.Document;
             
-            var mutations = document.DequeueMutations();
-            context.AddMutations(mutations);
+            var updates = document.DequeueUpdates();
+            context.AddUpdates(updates);
 
             switch (state)
             {
@@ -37,16 +37,16 @@ namespace MongoDB.MongoContext
                     break;
                 case DocumentState.Unchanged:
                 {
-                    if (mutations.Count > 0)
+                    if (updates.Count > 0)
                     {
                         _trackedDocument.State = DocumentState.Modified;
                     }
                     
-                    OnModified(context, mutations);
+                    OnModified(context, updates);
                     break;
                 }
                 case DocumentState.Modified:
-                    OnModified(context, mutations);
+                    OnModified(context, updates);
                     break;
                 default:
                     throw new InvalidOperationException($"The state was unknown '{state}'.");
@@ -68,18 +68,16 @@ namespace MongoDB.MongoContext
 
         private void OnModified(
             SaveDocumentsChangesContext<TDocument> context,
-            IReadOnlyCollection<IMutation<TDocument>> mutations)
+            IReadOnlyCollection<UpdateDefinition<TDocument>> updates)
         {
-            if (mutations.Count == 0)
+            if (updates.Count == 0)
             {
                 return;
             }
 
             var filter = PrimaryKeyFilter;
-            foreach (var mutation in mutations)
+            foreach (var update in updates)
             {
-                var update = mutation.ToUpdateDefinition(Builders<TDocument>.Update);
-                
                 var writeModel = new UpdateOneModel<TDocument>(filter, update);
                 context.AddWriteModel(writeModel);
             }

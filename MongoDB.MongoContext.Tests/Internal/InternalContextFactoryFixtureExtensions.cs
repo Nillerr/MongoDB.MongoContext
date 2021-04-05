@@ -7,17 +7,15 @@ namespace MongoDB.MongoContext.Tests
         /// </summary>
         /// <param name="contextFactory"></param>
         /// <param name="name"></param>
-        /// <param name="collectionListenerFactories"></param>
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="TContext"></typeparam>
         /// <returns></returns>
         public static TContext CreateUnmanagedContext<TContext>(
             this ContextFactory<TContext> contextFactory,
-            string name,
-            params IMongoSetListenerFactory[] collectionListenerFactories)
+            string name)
             where TContext : MongoContext
         {
-            var contextFixture = contextFactory.CreateContextFixture(name, collectionListenerFactories);
+            var contextFixture = contextFactory.CreateContextFixture(name);
             return contextFixture.Context;
         }
     }

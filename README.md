@@ -40,22 +40,8 @@ public class ArticlesContext : MongoContext
 ## Change Tracking, eh?
 
 `MongoDB.MongoContext` implements a different kind of change tracking. It does not try to implement diff checks between 
-documents, instead relying on an implementation pattern known from event sourcing, where each mutation is an event, 
-which must implement the `IMutation<TDocument>` interface:
-
-```c#
-internal record ArticleTitleChanged(string Title) : IMutation<Article>
-{
-    public UpdateDefinition<Article> ToUpdateDefinition(UpdateDefinitionBuilder<Article> update)
-    {
-        return update.Set(e => e.Title, Title);
-    }
-}
-```
-
-Notice how the event itself provides an `UpdateDefinition<TDocument>`. This is a deliberate choice to prevent consumers 
-of this library having to compromise on what type of MongoDB operations they can perform on their aggregates (and 
-totally not because we figured this is way simpler than implementing proper diffing for nested objects and collections).
+documents as of yet, instead taking an explicit dependency on `MongoDB.Driver` by promoting the use of the 
+`Update(update => update.Set(...))` method within aggregate commands.
 
 ### So how do I actually provide changes?
 
@@ -71,21 +57,14 @@ public class Article : MongoAggregate<Article>
     public string Title { get; private set; } = null!;
     public string Body { get; private set; } = null!;
 
-    #region ChangeTitle
-    
     public void ChangeTitle(string title)
     {
         // Perform input validation
-        Append(new ArticleTitleChanged(title), Apply);
+        Title = title;
+        
+        Update(update => update
+            .Set(e => e.Title, title));
     }
-
-    private void Apply(ArticleTitleChanged e)
-    {
-        // Apply the changes of the event to the local instance
-        Title = e.Title;
-    }
-    
-    #endregion
 }
 ```
 

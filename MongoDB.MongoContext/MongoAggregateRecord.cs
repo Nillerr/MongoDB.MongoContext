@@ -1,24 +1,23 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using MongoDB.Driver;
 
 namespace MongoDB.MongoContext
 {
     public abstract record MongoAggregateRecord<TAggregate> : IMongoAggregate<TAggregate>
         where TAggregate : MongoAggregateRecord<TAggregate>
     {
-        private List<IMutation<TAggregate>> _pendingMutations = new();
+        private List<UpdateDefinition<TAggregate>> _pendingMutations = new();
 
-        protected void Append<TMutation>(TMutation e, Action<TMutation> apply)
-            where TMutation : IMutation<TAggregate>
+        protected void Update(Func<UpdateDefinitionBuilder<TAggregate>, UpdateDefinition<TAggregate>> selector)
         {
-            apply(e);
-            _pendingMutations.Add(e);
+            _pendingMutations.Add(selector(Builders<TAggregate>.Update));
         }
         
-        IReadOnlyCollection<IMutation<TAggregate>> IMongoAggregate<TAggregate>.DequeueMutations()
+        IReadOnlyCollection<UpdateDefinition<TAggregate>> IMongoAggregate<TAggregate>.DequeueUpdates()
         {
-            return Interlocked.Exchange(ref _pendingMutations, new List<IMutation<TAggregate>>());
+            return Interlocked.Exchange(ref _pendingMutations, new List<UpdateDefinition<TAggregate>>());
         }
     }
 }

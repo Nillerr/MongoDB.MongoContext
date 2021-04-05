@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Driver;
@@ -14,13 +13,11 @@ namespace MongoDB.MongoContext
         
         private readonly IMongoDatabase _database;
         private readonly IClientSessionHandle _session;
-        private readonly IReadOnlyList<IMongoSetListenerFactory> _collectionListenerFactories;
 
         protected MongoContext(DatabaseContextOptions options)
         {
             _database = options.Database;
             _session = options.Database.Client.StartSession();
-            _collectionListenerFactories = options.CollectionListenerFactories;
         }
 
         public IMongoDatabase Database => _database;
@@ -55,11 +52,7 @@ namespace MongoDB.MongoContext
         {
             var collection = _database.GetCollection<TDocument>(name);
             
-            var listeners = _collectionListenerFactories
-                .Select(factory => factory.CreateListener<TDocument>(name))
-                .ToList();
-            
-            var collectionContext = new MongoSet<TDocument>(this, collection, _session, listeners, definition);
+            var collectionContext = new MongoSet<TDocument>(this, collection, _session, definition);
             return collectionContext;
         }
 
