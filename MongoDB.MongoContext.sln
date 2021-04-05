@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDB.MongoContext", "MongoDB.MongoContext\MongoDB.MongoContext.csproj", "{0183EBF9-A75F-4EAE-8147-61C713F17099}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDB.MongoContext.Tests", "MongoDB.MongoContext.Tests\MongoDB.MongoContext.Tests.csproj", "{1D26B715-2AEB-4ADE-8614-2A557DC8AA1A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{0183EBF9-A75F-4EAE-8147-61C713F17099}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0183EBF9-A75F-4EAE-8147-61C713F17099}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0183EBF9-A75F-4EAE-8147-61C713F17099}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D26B715-2AEB-4ADE-8614-2A557DC8AA1A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D26B715-2AEB-4ADE-8614-2A557DC8AA1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D26B715-2AEB-4ADE-8614-2A557DC8AA1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D26B715-2AEB-4ADE-8614-2A557DC8AA1A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

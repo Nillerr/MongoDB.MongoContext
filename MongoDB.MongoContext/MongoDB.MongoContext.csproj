@@ -1,7 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard1.5;netstandard2.0;netstandard2.1</TargetFrameworks>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <NoWarn>CS1591;${NoWarn}</NoWarn>
+        <LangVersion>9</LangVersion>
+        <Nullable>enable</Nullable>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <Version>1.0.0-alpha3</Version>
         <Description>
@@ -25,13 +28,5 @@ Provides a context for performing operations on a MongoDB database, enabling tra
     <ItemGroup>
       <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
     </ItemGroup>
-
-    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
-    </ItemGroup>
-
-    <PropertyGroup Condition="$(TargetFramework) == 'netstandard2.1'">
-      <Nullable>enable</Nullable>
-    </PropertyGroup>
 
 </Project>
