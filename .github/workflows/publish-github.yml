@@ -1,0 +1,63 @@
+name: publish-github
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    env:
+      config: "Release"
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # Set up .NET 5
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 5.0.x
+
+      # restore dependencies
+      - name: Install dependencies
+        run: dotnet restore
+
+      # build project
+      - name: Build
+        run: dotnet build --configuration $config --no-restore
+
+      # run tests with built project
+      - name: Test
+        run: dotnet test --no-restore --no-build --configuration $config
+
+  publish-odata-client:
+    name: Publish MongoDB.MongoContext
+    needs: build
+    runs-on: ubuntu-latest
+
+    env:
+      config: "Release"
+      project: "MongoDB.MongoContext"
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # Set up .NET 5
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 5.0.x
+
+      # pack nuget package
+      - name: Pack
+        run: dotnet pack $project/$project.csproj --configuration $config --include-symbols --include-source
+
+      # publish to github package
+      - name: Publish
+        run: |
+          NUPKG=$(ls ./$project/bin/$config | grep "\.nupkg")
+          dotnet nuget push ./$project/bin/$config/$NUPKG --api-key "${{ secrets.GITHUB_TOKEN }}" --source "https://nuget.pkg.github.com/Nillerr/index.json"

@@ -1,143 +1,96 @@
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Driver;
 
 namespace MongoDB.MongoContext
 {
-    /// <summary>
-    /// Like DbContext from Entity Framework, but with nowhere near the same features, and it's for MongoDB. Provides a
-    /// context for performing operations on a MongoDB database, enabling transactions without manually passing
-    /// <see cref="IClientSessionHandle"/> objects around, and provides access to every collection all in one place.
-    /// </summary>
-    /// <remarks>
-    /// This class is designed to be used as a Scoped service.
-    /// </remarks>
-    /// <example>
-    /// <code>
-    /// public class AppContext : MongoContext
-    /// {
-    ///     public AppContext(IMongoDatabase database) : base(database) { }
-    ///     
-    ///     public IMongoCollection&lt;Product&gt; Products => Collection&lt;Product&gt;("products");
-    ///     public IMongoCollection&lt;Order&gt; Orders => Collection&lt;Order&gt;("orders");
-    /// }
-    /// </code>
-    /// </example>
-    public abstract class MongoContext :
-        IDisposable
-#if NETSTANDARD2_1
-        , IAsyncDisposable
-#endif
+    public abstract class MongoContext
     {
+        private readonly ConcurrentDictionary<string, IMongoSet> _collectionContexts = new();
+        
+        private readonly IMongoDatabase _database;
         private readonly IClientSessionHandle _session;
-        
-#if NETSTANDARD2_1
-        private MongoTransaction? _currentTransaction;
-#else
-        private MongoTransaction _currentTransaction;
-#endif
+        private readonly IReadOnlyList<IMongoSetListenerFactory> _collectionListenerFactories;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MongoContext"/> class. Override this constructor in a derived
-        /// type to pass the <see cref="MongoContextOptions"/> to the context.
-        /// </summary>
-        /// <param name="options">The context options.</param>
-        protected MongoContext(MongoContextOptions options)
+        protected MongoContext(DatabaseContextOptions options)
         {
-            Database = options.Database;
-            
-            // `StartSession` will block while determining whether the MongoDB server supports sessions, but that query
-            // will only be performed once, being saved in memory for the next invocation. Therefore it is both simpler
-            // and alright to just use the blocking version here.
-            _session = options.Database.Client.StartSession(options.SessionOptions);
+            _database = options.Database;
+            _session = options.Database.Client.StartSession();
+            _collectionListenerFactories = options.CollectionListenerFactories;
         }
 
-        /// <summary>
-        /// <para>
-        /// Gets the current <see cref="IMongoTransaction"/> being used by the context, or <see langword="null"/> if no
-        /// transaction is in use.
-        /// </para>
-        /// <para>
-        /// This property will be <see langword="null"/> unless <see cref="StartTransaction"/> has been called. No
-        /// attempt is made to obtain a transaction from the current connection or similar.
-        /// </para>
-        /// </summary>
-#if NETSTANDARD2_1
-        public IMongoTransaction? CurrentTransaction => _currentTransaction;
-#else
-        public IMongoTransaction CurrentTransaction => _currentTransaction;
-#endif
+        public IMongoDatabase Database => _database;
 
-        /// <summary>
-        /// Starts a new transaction.
-        /// </summary>
-        /// <param name="options"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns>An object for interacting with the started transaction.</returns>
-        /// <exception cref="InvalidOperationException">A transaction is already in progress in this context.</exception>
-        public IMongoTransaction StartTransaction(
-#if NETSTANDARD2_1
-            TransactionOptions? options = null,
-#else
-            TransactionOptions options = null,
-#endif
-            CancellationToken cancellationToken = default
-        )
+        public async Task InitializeAsync(CancellationToken cancellationToken = default)
         {
-            _session.StartTransaction(options);
-            
-            var mongoTransaction = new MongoTransaction(_session);
-            _currentTransaction = mongoTransaction;
-
-            return mongoTransaction;
-        }
-
-        /// <summary>
-        /// Gets the underlying <see cref="IMongoClient"/>.
-        /// </summary>
-        public IMongoClient Client => Database.Client;
-        
-        /// <summary>
-        /// Gets the underlying <see cref="IMongoDatabase"/>.
-        /// </summary>
-        public IMongoDatabase Database { get; }
-        
-        /// <summary>
-        /// Gets the collection with the specified <paramref name="name"/>.
-        /// </summary>
-        /// <param name="name">The name of the collection.</param>
-        /// <typeparam name="TDocument">The type of document.</typeparam>
-        /// <returns>
-        /// An implementation of a collection. The implementation will be
-        /// <see cref="SessionWrappedMongoCollection{TDocument}"/> while the context is in a transaction; otherwise the
-        /// return value of <see cref="IMongoDatabase.GetCollection{TDocument}"/>.
-        /// </returns>
-        protected virtual IMongoCollection<TDocument> Collection<TDocument>(string name)
-        {
-            var collection = Database.GetCollection<TDocument>(name);
-            return new SessionWrappedMongoCollection<TDocument>(collection, _session);
-        }
-
-#if NETSTANDARD2_1
-        /// <inheritdoc />
-        public async ValueTask DisposeAsync()
-        {
-            var transaction = _currentTransaction;
-            if (transaction != null)
+            foreach (var collectionContext in _collectionContexts.Values)
             {
-                await transaction.DisposeAsync().ConfigureAwait(false);
+                await collectionContext.InitializeAsync(cancellationToken);
             }
-            
-            _session.Dispose();
         }
-#endif
 
-        /// <inheritdoc />
-        public void Dispose()
+        protected MongoSetDefinition<TDocument> Collection<TDocument>(
+            string name,
+            PrimaryKeyFilterSelector<TDocument> primaryKeyFilterSelector)
+            where TDocument : IMongoAggregate<TDocument>
         {
-            _currentTransaction?.Dispose();
-            _session.Dispose();
+            return new MongoSetDefinition<TDocument>(this, name, primaryKeyFilterSelector);
+        }
+
+        internal IMongoSet<TDocument> GetCollection<TDocument>(MongoSetDefinition<TDocument> definition)
+            where TDocument : IMongoAggregate<TDocument>
+        {
+            IMongoSet collection = _collectionContexts.GetOrAdd(definition.Name, CreateCollection, definition);
+            return (IMongoSet<TDocument>) collection;
+        }
+
+        private MongoSet<TDocument> CreateCollection<TDocument>(
+            string name,
+            MongoSetDefinition<TDocument> definition)
+            where TDocument : IMongoAggregate<TDocument>
+        {
+            var collection = _database.GetCollection<TDocument>(name);
+            
+            var listeners = _collectionListenerFactories
+                .Select(factory => factory.CreateListener<TDocument>(name))
+                .ToList();
+            
+            var collectionContext = new MongoSet<TDocument>(this, collection, _session, listeners, definition);
+            return collectionContext;
+        }
+
+        public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            var postCommitActions = new List<AsyncDelegate>();
+
+            _session.StartTransaction();
+
+            try
+            {
+                foreach (var collection in _collectionContexts.Values)
+                {
+                    var postCommitAction = await collection.SaveChangesAsync(cancellationToken);
+                    postCommitActions.Add(postCommitAction);
+                }
+
+                await _session.CommitTransactionAsync(cancellationToken);
+            }
+            catch (Exception)
+            {
+                // ReSharper disable once MethodSupportsCancellation
+                await _session.AbortTransactionAsync();
+                
+                throw;
+            }
+
+            foreach (var postCommitAction in postCommitActions)
+            {
+                await postCommitAction(cancellationToken);
+            }
         }
     }
 }
