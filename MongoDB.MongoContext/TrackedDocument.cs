@@ -4,6 +4,7 @@ namespace MongoDB.MongoContext
         where TDocument : IMongoAggregate<TDocument>
     {
         public TDocument Document { get; }
+        
         public DocumentState State { get; set; }
 
         public TrackedDocument(TDocument document, DocumentState state)

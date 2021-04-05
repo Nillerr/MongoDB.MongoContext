@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,7 +14,8 @@ namespace MongoDB.MongoContext
         IDocumentTracker<TDocument>
         where TDocument : IMongoAggregate<TDocument>
     {
-        private readonly ConcurrentDictionary<BsonDocument, TrackedDocument<TDocument>> _trackedDocuments = new();
+        private readonly List<TrackedDocument<TDocument>> _trackedDocuments = new();
+        private readonly Dictionary<BsonDocument, TrackedDocument<TDocument>> _trackedDocumentsById = new();
 
         private readonly IClientSessionHandle _session;
 
@@ -54,7 +54,7 @@ namespace MongoDB.MongoContext
         {
             var context = new SaveDocumentsChangesContext<TDocument>();
 
-            foreach (var trackedDocument in _trackedDocuments.Values)
+            foreach (var trackedDocument in _trackedDocuments)
             {
                 var documentContext = new SaveDocumentChangesContext<TDocument>(trackedDocument, _primaryKeyFilterSelector);
                 documentContext.OnSaveChanges(context);
@@ -82,15 +82,15 @@ namespace MongoDB.MongoContext
 
         private void UpdateTrackedDocumentStates()
         {
-            foreach (var entry in _trackedDocuments)
+            foreach (var trackedDocument in _trackedDocuments)
             {
-                UpdateTrackedDocumentState(entry.Value.State, entry);
+                UpdateTrackedDocumentState(trackedDocument.State, trackedDocument);
             }
         }
 
         private void UpdateTrackedDocumentState(
             DocumentState state,
-            KeyValuePair<BsonDocument, TrackedDocument<TDocument>> entry)
+            TrackedDocument<TDocument> trackedDocument)
         {
             switch (state)
             {
@@ -99,7 +99,7 @@ namespace MongoDB.MongoContext
                 case DocumentState.Added:
                 case DocumentState.Modified:
                 case DocumentState.Unchanged:
-                    entry.Value.State = DocumentState.Unchanged;
+                    trackedDocument.State = DocumentState.Unchanged;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(state), state, null);
@@ -129,9 +129,19 @@ namespace MongoDB.MongoContext
         private TrackedDocument<TDocument> Attach(TDocument document, DocumentState state)
         {
             var primaryKey = PrimaryKey(document);
-            var trackedDocument = _trackedDocuments.GetOrAdd(primaryKey, CreateTrackedDocument, (document, state));
-            trackedDocument.State = state;
-            return trackedDocument;
+            
+            if (_trackedDocumentsById.TryGetValue(primaryKey, out var currentTrackedDocument))
+            {
+                currentTrackedDocument.State = state;
+                return currentTrackedDocument;
+            }
+            
+            var newTrackedDocument = new TrackedDocument<TDocument>(document, state);
+            
+            _trackedDocuments.Add(newTrackedDocument);
+            _trackedDocumentsById.Add(primaryKey, newTrackedDocument);
+            
+            return newTrackedDocument;
         }
 
         private BsonDocument PrimaryKey(TDocument document)
@@ -148,14 +158,6 @@ namespace MongoDB.MongoContext
         private FilterDefinition<TDocument> GetPrimaryKeyFilter(TDocument document)
         {
             return _primaryKeyFilterSelector(Builders<TDocument>.Filter, document);
-        }
-
-        private static TrackedDocument<TDocument> CreateTrackedDocument(
-            BsonDocument key,
-            (TDocument, DocumentState) args)
-        {
-            var (document, state) = args;
-            return new TrackedDocument<TDocument>(document, state);
         }
     }
 }
