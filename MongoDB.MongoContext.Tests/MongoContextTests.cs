@@ -22,7 +22,7 @@ namespace MongoDB.MongoContext.Tests
                 Id = Guid.Parse("01550e61-778c-4f4b-bda8-ff46c0c5235c"),
                 Title = "The first article",
                 Body = "The body of the first article",
-                CreatedAt = UtcNow,
+                CreatedAt = Clock.UtcNow,
             };
             
             var article2 = new Article
@@ -30,7 +30,7 @@ namespace MongoDB.MongoContext.Tests
                 Id = Guid.Parse("e9692853-e43f-49d7-8fea-7ec0ef83f3d6"),
                 Title = "The second article",
                 Body = "The body of the second article",
-                CreatedAt = UtcNow,
+                CreatedAt = Clock.UtcNow,
             };
 
             _context.Articles.Add(article1);
@@ -52,7 +52,7 @@ namespace MongoDB.MongoContext.Tests
                 Id = Guid.Parse("01550e61-778c-4f4b-bda8-ff46c0c5235c"),
                 Title = "The first article",
                 Body = "The body of the first article",
-                CreatedAt = UtcNow,
+                CreatedAt = Clock.UtcNow,
             };
 
             await _context.Articles.Collection.InsertOneAsync(otherArticle);
@@ -64,7 +64,7 @@ namespace MongoDB.MongoContext.Tests
                 Id = articleId,
                 Title = "The Title",
                 Body = "The Body",
-                CreatedAt = UtcNow,
+                CreatedAt = Clock.UtcNow,
             });
             
             _context.Articles.Remove(new Article { Id = articleId });
@@ -85,7 +85,7 @@ namespace MongoDB.MongoContext.Tests
                 Id = Guid.Parse("01550e61-778c-4f4b-bda8-ff46c0c5235c"),
                 Title = "The first article",
                 Body = "The body of the first article",
-                CreatedAt = UtcNow,
+                CreatedAt = Clock.UtcNow,
             };
 
             await _context.Articles.Collection.InsertOneAsync(otherArticle);
@@ -97,7 +97,7 @@ namespace MongoDB.MongoContext.Tests
                 Id = articleId,
                 Title = "The Title",
                 Body = "The Body",
-                CreatedAt = UtcNow,
+                CreatedAt = Clock.UtcNow,
             });
 
             var articleToDelete = await _context.Articles

@@ -9,7 +9,7 @@ namespace MongoDB.MongoContext.Tests
     {
         private readonly List<IAsyncLifetime> _asyncLifetimes = new();
 
-        public DateTime UtcNow => SystemClock.Instance.UtcNow;
+        public IClock Clock => SystemClock.Instance;
         
         public void AddAsyncLifetime(IAsyncLifetime obj)
         {
