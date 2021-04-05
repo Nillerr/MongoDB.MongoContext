@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 
 namespace MongoDB.MongoContext.Tests
 {
-    public interface IArticlesContextManager
+    public interface IContextManager
     {
         Task DestroyContext(string name);
     }

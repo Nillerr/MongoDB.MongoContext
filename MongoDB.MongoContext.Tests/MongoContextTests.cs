@@ -4,11 +4,11 @@ using Xunit;
 
 namespace MongoDB.MongoContext.Tests
 {
-    public class MongoContextTests : Tests, IClassFixture<ArticlesContextFactoryFixture>
+    public class MongoContextTests : Tests, IClassFixture<ArticlesContextFactory>
     {
         private readonly ArticlesContext _context;
 
-        public MongoContextTests(ArticlesContextFactoryFixture contextFactory)
+        public MongoContextTests(ArticlesContextFactory contextFactory)
         {
             _context = contextFactory.CreateContext(this);
         }

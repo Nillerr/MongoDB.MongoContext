@@ -3,11 +3,12 @@ using Xunit;
 
 namespace MongoDB.MongoContext.Tests
 {
-    public sealed class ArticlesContextFixture : IAsyncLifetime
+    public sealed class ContextFixture<TContext> : IAsyncLifetime
+        where TContext : MongoContext
     {
-        private readonly IArticlesContextManager _contextManager;
+        private readonly IContextManager _contextManager;
 
-        public ArticlesContextFixture(IArticlesContextManager contextManager, string name, ArticlesContext context)
+        public ContextFixture(IContextManager contextManager, string name, TContext context)
         {
             _contextManager = contextManager;
             Name = name;
@@ -15,7 +16,8 @@ namespace MongoDB.MongoContext.Tests
         }
 
         public string Name { get; }
-        public ArticlesContext Context { get; }
+        
+        public TContext Context { get; }
 
         public Task InitializeAsync()
         {
