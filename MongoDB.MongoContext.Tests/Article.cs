@@ -6,27 +6,27 @@ namespace MongoDB.MongoContext.Tests
 {
     [Equatable]
     [SuppressMessage("ReSharper", "PartialTypeWithSinglePart", Justification = "Source Generator: Generator.Equals")]
-    public sealed partial class Article : MongoAggregate<Article>
+public sealed partial class Article : MongoAggregate<Article>
+{
+    public Guid Id { get; set; }
+
+    public string Title { get; set; } = null!;
+    public string Body { get; set; } = null!;
+    
+    public DateTime CreatedAt { get; set; }
+
+    #region ChangeTitle
+    
+    public void ChangeTitle(string title)
     {
-        public Guid Id { get; set; }
-
-        public string Title { get; set; } = null!;
-        public string Body { get; set; } = null!;
-        
-        public DateTime CreatedAt { get; set; }
-
-        #region ChangeTitle
-        
-        public void ChangeTitle(string title)
-        {
-            Append(new ArticleTitleChange(title), Apply);
-        }
-
-        private void Apply(ArticleTitleChange e)
-        {
-            Title = e.Title;
-        }
-        
-        #endregion
+        Append(new ArticleTitleChanged(title), Apply);
     }
+
+    private void Apply(ArticleTitleChanged e)
+    {
+        Title = e.Title;
+    }
+    
+    #endregion
+}
 }
