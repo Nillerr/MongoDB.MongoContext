@@ -1,9 +1,9 @@
-using System;
 using System.Threading.Tasks;
+using Xunit;
 
 namespace MongoDB.MongoContext.Tests
 {
-    public sealed class ArticlesContextFixture : IAsyncDisposable
+    public sealed class ArticlesContextFixture : IAsyncLifetime
     {
         private readonly IArticlesContextManager _contextManager;
 
@@ -16,10 +16,15 @@ namespace MongoDB.MongoContext.Tests
 
         public string Name { get; }
         public ArticlesContext Context { get; }
-        
-        public async ValueTask DisposeAsync()
+
+        public Task InitializeAsync()
         {
-            await _contextManager.DestroyContext(Name);
+            return Context.InitializeAsync();
+        }
+
+        public Task DisposeAsync()
+        {
+            return _contextManager.DestroyContext(Name);
         }
     }
 }

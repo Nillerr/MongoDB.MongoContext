@@ -10,7 +10,7 @@ using MongoDB.Driver;
 namespace MongoDB.MongoContext
 {
     internal sealed class DbCollection<TDocument> : 
-        IChangeTracker,
+        IDbCollection,
         IDbCollection<TDocument>,
         IDocumentTracker<TDocument>
         where TDocument : IMongoAggregate<TDocument>
@@ -21,27 +21,34 @@ namespace MongoDB.MongoContext
 
         private readonly List<IDbCollectionListener<TDocument>> _listeners;
         private readonly PrimaryKeyFilterSelector<TDocument> _primaryKeyFilterSelector;
+        private readonly IReadOnlyList<IndexDefinition<TDocument>> _indexDefinitions;
 
         public DbCollection(
             MongoContext context,
-            string name,
             IMongoCollection<TDocument> collection,
             IClientSessionHandle session,
             List<IDbCollectionListener<TDocument>> listeners,
-            PrimaryKeyFilterSelector<TDocument> primaryKeyFilterSelector)
+            DbCollectionDefinition<TDocument> definition)
         {
             Context = context;
-            Name = name;
+            Name = definition.Name;
             Collection = collection;
             _session = session;
             _listeners = listeners;
-            _primaryKeyFilterSelector = primaryKeyFilterSelector;
+            _primaryKeyFilterSelector = definition.PrimaryKeyFilterSelector;
+            _indexDefinitions = definition.IndexDefinitions;
         }
 
         public string Name { get; }
         public IMongoCollection<TDocument> Collection { get; }
 
         public MongoContext Context { get; }
+
+        public async Task InitializeAsync(CancellationToken cancellationToken = default)
+        {
+            var processor = new DbCollectionDefinitionProcessor<TDocument>(Collection);
+            await processor.InitializeIndices(_indexDefinitions, cancellationToken);
+        }
 
         public async Task<AsyncDelegate> SaveChangesAsync(CancellationToken cancellationToken = default)
         {

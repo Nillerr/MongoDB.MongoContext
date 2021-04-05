@@ -5,18 +5,44 @@ using Xunit;
 
 namespace MongoDB.MongoContext.Tests
 {
-    public abstract class Tests : IAsyncLifetime, IAsyncDisposableManager
+    public abstract class Tests : IAsyncLifetime, IAsyncLifetimeManager
     {
-        private readonly List<IAsyncDisposable> _asyncDisposables = new();
+        private readonly List<IAsyncLifetime> _asyncLifetimes = new();
         
-        public void AddAsyncDisposable(IAsyncDisposable disposable)
+        public void AddAsyncLifetime(IAsyncLifetime obj)
         {
-            _asyncDisposables.Add(disposable);
+            _asyncLifetimes.Add(obj);
         }
 
-        public Task InitializeAsync()
+        public async Task InitializeAsync()
         {
-            return OnInitializeAsync();
+            var exceptions = new List<Exception>();
+            
+            foreach (var asyncLifetime in _asyncLifetimes)
+            {
+                try
+                {
+                    await asyncLifetime.InitializeAsync();
+                }
+                catch (Exception ex)
+                {
+                    exceptions.Add(ex);
+                }
+            }
+
+            try
+            {
+                await OnInitializeAsync();
+            }
+            catch (Exception ex)
+            {
+                exceptions.Add(ex);
+            }
+
+            if (exceptions.Count > 0)
+            {
+                throw new AggregateException(exceptions);
+            }
         }
 
         public async Task DisposeAsync()
@@ -32,11 +58,11 @@ namespace MongoDB.MongoContext.Tests
                 exceptions.Add(ex);
             }
             
-            foreach (var asyncDisposable in _asyncDisposables)
+            foreach (var asyncLifetime in _asyncLifetimes)
             {
                 try
                 {
-                    await asyncDisposable.DisposeAsync();
+                    await asyncLifetime.DisposeAsync();
                 }
                 catch (Exception ex)
                 {

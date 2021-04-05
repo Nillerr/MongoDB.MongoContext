@@ -21,9 +21,15 @@ namespace MongoDB.MongoContext.Tests
         public ArticlesContext(DatabaseContextOptions options)
             : base(options)
         {
+            Articles = Collection<Article>("articles", (fb, article) => fb.Where(e => e.Id == article.Id))
+                .HasIndex(idx => idx.Combine(idx.Text(e => e.Title), idx.Text(e => e.Body)), index =>
+                {
+                    index.Weights = new WeightsBuilder<Article>();
+                })
+                .HasIndex(idx => idx.Ascending(e => e.CreatedAt))
+                .ToDbCollection();
         }
 
-        public IDbCollection<Article> Articles =>
-            GetCollection<Article>("articles", (fb, article) => fb.Where(e => e.Id == article.Id));
+        public IDbCollection<Article> Articles { get; }
     }
 }

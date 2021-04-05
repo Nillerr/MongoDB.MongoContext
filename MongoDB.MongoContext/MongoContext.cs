@@ -10,7 +10,7 @@ namespace MongoDB.MongoContext
 {
     public abstract class MongoContext
     {
-        private readonly ConcurrentDictionary<string, IChangeTracker> _collectionContexts = new();
+        private readonly ConcurrentDictionary<string, IDbCollection> _collectionContexts = new();
         
         private readonly IMongoDatabase _database;
         private readonly IClientSessionHandle _session;
@@ -23,18 +23,32 @@ namespace MongoDB.MongoContext
             _collectionListenerFactories = options.CollectionListenerFactories;
         }
 
-        protected virtual IDbCollection<TDocument> GetCollection<TDocument>(
+        public async Task InitializeAsync(CancellationToken cancellationToken = default)
+        {
+            foreach (var collectionContext in _collectionContexts.Values)
+            {
+                await collectionContext.InitializeAsync(cancellationToken);
+            }
+        }
+
+        protected virtual DbCollectionDefinition<TDocument> Collection<TDocument>(
             string name,
             PrimaryKeyFilterSelector<TDocument> primaryKeyFilterSelector)
             where TDocument : IMongoAggregate<TDocument>
         {
-            IChangeTracker collection = _collectionContexts.GetOrAdd(name, CreateCollection, primaryKeyFilterSelector);
+            return new DbCollectionDefinition<TDocument>(this, name, primaryKeyFilterSelector);
+        }
+
+        internal virtual IDbCollection<TDocument> GetCollection<TDocument>(DbCollectionDefinition<TDocument> definition)
+            where TDocument : IMongoAggregate<TDocument>
+        {
+            IDbCollection collection = _collectionContexts.GetOrAdd(definition.Name, CreateCollection, definition);
             return (IDbCollection<TDocument>) collection;
         }
 
         private DbCollection<TDocument> CreateCollection<TDocument>(
             string name,
-            PrimaryKeyFilterSelector<TDocument> primaryKeyFilterSelector)
+            DbCollectionDefinition<TDocument> definition)
             where TDocument : IMongoAggregate<TDocument>
         {
             var collection = _database.GetCollection<TDocument>(name);
@@ -43,7 +57,7 @@ namespace MongoDB.MongoContext
                 .Select(factory => factory.CreateListener<TDocument>(name))
                 .ToList();
             
-            var collectionContext = new DbCollection<TDocument>(this, name, collection, _session, listeners, primaryKeyFilterSelector);
+            var collectionContext = new DbCollection<TDocument>(this, collection, _session, listeners, definition);
             return collectionContext;
         }
 
