@@ -1,10 +1,11 @@
 using System.Collections.Generic;
+using MongoDB.Driver;
 
 namespace MongoDB.MongoContext
 {
     public interface IMongoAggregate<TAggregate>
         where TAggregate : IMongoAggregate<TAggregate>
     {
-        IReadOnlyCollection<IMutation<TAggregate>> DequeueMutations();
+        IReadOnlyCollection<UpdateDefinition<TAggregate>> DequeueUpdates();
     }
 }

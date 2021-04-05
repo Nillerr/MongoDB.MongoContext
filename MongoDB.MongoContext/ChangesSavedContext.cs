@@ -1,14 +1,15 @@
 using System.Collections.Generic;
+using MongoDB.Driver;
 
 namespace MongoDB.MongoContext
 {
     public sealed class ChangesSavedContext<TDocument>
     {
-        public ChangesSavedContext(IReadOnlyCollection<IMutation<TDocument>> mutations)
+        public ChangesSavedContext(IReadOnlyCollection<UpdateDefinition<TDocument>> updates)
         {
-            Mutations = mutations;
+            Updates = updates;
         }
 
-        public IReadOnlyCollection<IMutation<TDocument>> Mutations { get; }
+        public IReadOnlyCollection<UpdateDefinition<TDocument>> Updates { get; }
     }
 }

@@ -6,15 +6,15 @@ namespace MongoDB.MongoContext
     internal sealed class SaveDocumentsChangesContext<TDocument>
         where TDocument : IMongoAggregate<TDocument>
     {
-        private readonly List<IMutation<TDocument>> _mutations = new();
+        private readonly List<UpdateDefinition<TDocument>> _updates = new();
         private readonly List<WriteModel<TDocument>> _writeModels = new();
 
-        public IReadOnlyList<IMutation<TDocument>> Mutations => _mutations;
+        public IReadOnlyList<UpdateDefinition<TDocument>> Updates => _updates;
         public IReadOnlyList<WriteModel<TDocument>> WriteModels => _writeModels;
 
-        public void AddMutations(IReadOnlyCollection<IMutation<TDocument>> mutations)
+        public void AddUpdates(IReadOnlyCollection<UpdateDefinition<TDocument>> updates)
         {
-            _mutations.AddRange(mutations);
+            _updates.AddRange(updates);
         }
 
         public void AddWriteModel(WriteModel<TDocument> writeModel)

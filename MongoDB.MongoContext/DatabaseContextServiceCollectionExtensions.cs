@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 
@@ -10,20 +9,12 @@ namespace MongoDB.MongoContext
         public static IServiceCollection AddMongoContext<T>(
             this IServiceCollection serviceCollection,
             IMongoDatabase database,
-            Func<DatabaseContextOptions, T> contextFactory,
-            Action<MongoContextOptions>? configure = null)
+            Func<DatabaseContextOptions, T> contextFactory)
             where T : MongoContext
         {
-            var options = new MongoContextOptions();
-            configure?.Invoke(options);
-            
             serviceCollection.AddScoped<T>(serviceProvider =>
             {
-                var listenerFactories = options.Listeners
-                    .Select(factory => factory(serviceProvider))
-                    .ToList();
-                
-                var databaseOptions = new DatabaseContextOptions(database, listenerFactories);
+                var databaseOptions = new DatabaseContextOptions(database);
                 return contextFactory(databaseOptions);
             });
 
