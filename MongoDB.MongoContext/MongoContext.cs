@@ -11,19 +11,17 @@ namespace MongoDB.MongoContext
     public abstract class MongoContext
     {
         private readonly ConcurrentDictionary<string, IChangeTracker> _collectionContexts = new();
-
+        
+        private readonly IMongoDatabase _database;
+        private readonly IClientSessionHandle _session;
         private readonly IReadOnlyList<IDbCollectionListenerFactory> _collectionListenerFactories;
 
         protected MongoContext(DatabaseContextOptions options)
         {
-            Database = options.Database;
-            Session = options.Database.Client.StartSession();
-
+            _database = options.Database;
+            _session = options.Database.Client.StartSession();
             _collectionListenerFactories = options.CollectionListenerFactories;
         }
-
-        protected IMongoDatabase Database { get; }
-        protected IClientSessionHandle Session { get; }
 
         protected virtual IDbCollection<TDocument> GetCollection<TDocument>(
             string name,
@@ -39,13 +37,13 @@ namespace MongoDB.MongoContext
             PrimaryKeyFilterSelector<TDocument> primaryKeyFilterSelector)
             where TDocument : IMongoAggregate<TDocument>
         {
-            var collection = Database.GetCollection<TDocument>(name);
+            var collection = _database.GetCollection<TDocument>(name);
             
             var listeners = _collectionListenerFactories
                 .Select(factory => factory.CreateListener<TDocument>(name))
                 .ToList();
             
-            var collectionContext = new DbCollection<TDocument>(this, name, collection, Session, listeners, primaryKeyFilterSelector);
+            var collectionContext = new DbCollection<TDocument>(this, name, collection, _session, listeners, primaryKeyFilterSelector);
             return collectionContext;
         }
 
@@ -53,7 +51,7 @@ namespace MongoDB.MongoContext
         {
             var postCommitActions = new List<AsyncDelegate>();
 
-            Session.StartTransaction();
+            _session.StartTransaction();
 
             try
             {
@@ -63,12 +61,12 @@ namespace MongoDB.MongoContext
                     postCommitActions.Add(postCommitAction);
                 }
 
-                await Session.CommitTransactionAsync(cancellationToken);
+                await _session.CommitTransactionAsync(cancellationToken);
             }
             catch (Exception)
             {
                 // ReSharper disable once MethodSupportsCancellation
-                await Session.AbortTransactionAsync();
+                await _session.AbortTransactionAsync();
                 
                 throw;
             }
