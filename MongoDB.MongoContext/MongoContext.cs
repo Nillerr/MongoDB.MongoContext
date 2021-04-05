@@ -23,6 +23,8 @@ namespace MongoDB.MongoContext
             _collectionListenerFactories = options.CollectionListenerFactories;
         }
 
+        internal IMongoDatabase Database => _database;
+
         public async Task InitializeAsync(CancellationToken cancellationToken = default)
         {
             foreach (var collectionContext in _collectionContexts.Values)

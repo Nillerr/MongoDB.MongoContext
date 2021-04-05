@@ -28,12 +28,15 @@ namespace MongoDB.MongoContext
 
         public DbCollectionDefinition<TDocument> HasIndex(
             Func<IndexKeysDefinitionBuilder<TDocument>, IndexKeysDefinition<TDocument>> indexKeysSelector,
-            Action<CreateIndexDefinitionOptions<TDocument>>? configure = null)
+            Action<CreateIndexOptionsBuilder<TDocument>, CreateIndexDefinitionOptions<TDocument>>? configure = null)
         {
             var indexKeys = indexKeysSelector(Builders<TDocument>.IndexKeys);
 
+            var mongoCollection = _context.Database.GetCollection<TDocument>(Name);
+            
             var options = new CreateIndexDefinitionOptions<TDocument>();
-            configure?.Invoke(options);
+            var optionsBuilder = new CreateIndexOptionsBuilder<TDocument>(mongoCollection);
+            configure?.Invoke(optionsBuilder, options);
 
             var indexDefinition = new IndexDefinition<TDocument>(indexKeys, options);
             _indexDefinitions.Add(indexDefinition);
