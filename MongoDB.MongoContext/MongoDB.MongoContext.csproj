@@ -21,7 +21,7 @@ Provides a context for performing operations on a MongoDB database, enabling tra
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="MongoDB.Driver" Version="2.11.0" />
+      <PackageReference Include="MongoDB.Driver" Version="2.12.1" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="1.0.0" />
     </ItemGroup>
 
