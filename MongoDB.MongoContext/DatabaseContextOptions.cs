@@ -5,7 +5,7 @@ namespace MongoDB.MongoContext
 {
     public sealed class DatabaseContextOptions
     {
-        public DatabaseContextOptions(IMongoDatabase database, IReadOnlyList<IDbCollectionListenerFactory> collectionListenerFactories = null)
+        public DatabaseContextOptions(IMongoDatabase database, IReadOnlyList<IMongoSetListenerFactory> collectionListenerFactories = null)
         {
             Database = database;
             CollectionListenerFactories = collectionListenerFactories;
@@ -13,6 +13,6 @@ namespace MongoDB.MongoContext
 
         public IMongoDatabase Database { get; }
 
-        public IReadOnlyList<IDbCollectionListenerFactory> CollectionListenerFactories { get; }
+        public IReadOnlyList<IMongoSetListenerFactory> CollectionListenerFactories { get; }
     }
 }

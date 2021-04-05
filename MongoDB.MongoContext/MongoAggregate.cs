@@ -6,18 +6,18 @@ namespace MongoDB.MongoContext
 {
     public abstract class MongoAggregate<TAggregate> : IMongoAggregate<TAggregate>, IEquatable<MongoAggregate<TAggregate>> where TAggregate : MongoAggregate<TAggregate>
     {
-        private List<IPendingEvent<TAggregate>> _pendingEvents = new();
+        private List<IMutation<TAggregate>> _pendingMutations = new();
 
-        protected void Append<TEvent>(TEvent e, Action<TEvent> apply)
-            where TEvent : IPendingEvent<TAggregate>
+        protected void Append<TMutation>(TMutation e, Action<TMutation> apply)
+            where TMutation : IMutation<TAggregate>
         {
             apply(e);
-            _pendingEvents.Add(e);
+            _pendingMutations.Add(e);
         }
         
-        public IReadOnlyCollection<IPendingEvent<TAggregate>> DequeuePendingEvents()
+        IReadOnlyCollection<IMutation<TAggregate>> IMongoAggregate<TAggregate>.DequeueMutations()
         {
-            return Interlocked.Exchange(ref _pendingEvents, new List<IPendingEvent<TAggregate>>());
+            return Interlocked.Exchange(ref _pendingMutations, new List<IMutation<TAggregate>>());
         }
 
         public bool Equals(MongoAggregate<TAggregate>? other)

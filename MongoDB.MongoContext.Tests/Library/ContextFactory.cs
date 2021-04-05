@@ -14,7 +14,7 @@ namespace MongoDB.MongoContext.Tests
 
         protected abstract TContext CreateContext(DatabaseContextOptions options);
 
-        public ContextFixture<TContext> CreateContextFixture(string name, params IDbCollectionListenerFactory[] collectionListenerFactories)
+        public ContextFixture<TContext> CreateContextFixture(string name, params IMongoSetListenerFactory[] collectionListenerFactories)
         {
             var client = CreateClient();
             var database = client.GetDatabase(name);

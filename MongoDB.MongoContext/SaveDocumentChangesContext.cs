@@ -24,8 +24,8 @@ namespace MongoDB.MongoContext
             var state = _trackedDocument.State;
             var document = _trackedDocument.Document;
             
-            var pendingEvents = document.DequeuePendingEvents();
-            context.AddPendingEvents(pendingEvents);
+            var mutations = document.DequeueMutations();
+            context.AddMutations(mutations);
 
             switch (state)
             {
@@ -37,16 +37,16 @@ namespace MongoDB.MongoContext
                     break;
                 case DocumentState.Unchanged:
                 {
-                    if (pendingEvents.Count > 0)
+                    if (mutations.Count > 0)
                     {
                         _trackedDocument.State = DocumentState.Modified;
                     }
                     
-                    OnModified(context, pendingEvents);
+                    OnModified(context, mutations);
                     break;
                 }
                 case DocumentState.Modified:
-                    OnModified(context, pendingEvents);
+                    OnModified(context, mutations);
                     break;
                 default:
                     throw new InvalidOperationException($"The state was unknown '{state}'.");
@@ -68,17 +68,17 @@ namespace MongoDB.MongoContext
 
         private void OnModified(
             SaveDocumentsChangesContext<TDocument> context,
-            IReadOnlyCollection<IPendingEvent<TDocument>> pendingEvents)
+            IReadOnlyCollection<IMutation<TDocument>> mutations)
         {
-            if (pendingEvents.Count == 0)
+            if (mutations.Count == 0)
             {
                 return;
             }
 
             var filter = PrimaryKeyFilter;
-            foreach (var pendingEvent in pendingEvents)
+            foreach (var mutation in mutations)
             {
-                var update = pendingEvent.ToUpdateDefinition(Builders<TDocument>.Update);
+                var update = mutation.ToUpdateDefinition(Builders<TDocument>.Update);
                 
                 var writeModel = new UpdateOneModel<TDocument>(filter, update);
                 context.AddWriteModel(writeModel);

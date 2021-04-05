@@ -8,9 +8,9 @@ using MongoDB.Driver;
 
 namespace MongoDB.MongoContext
 {
-    internal sealed class DbCollection<TDocument> : 
-        IDbCollection,
-        IDbCollection<TDocument>,
+    internal sealed class MongoSet<TDocument> : 
+        IMongoSet,
+        IMongoSet<TDocument>,
         IDocumentTracker<TDocument>
         where TDocument : IMongoAggregate<TDocument>
     {
@@ -19,16 +19,16 @@ namespace MongoDB.MongoContext
 
         private readonly IClientSessionHandle _session;
 
-        private readonly List<IDbCollectionListener<TDocument>> _listeners;
+        private readonly List<IMongoSetListener<TDocument>> _listeners;
         private readonly PrimaryKeyFilterSelector<TDocument> _primaryKeyFilterSelector;
         private readonly IReadOnlyList<IndexDefinition<TDocument>> _indexDefinitions;
 
-        public DbCollection(
+        public MongoSet(
             MongoContext context,
             IMongoCollection<TDocument> collection,
             IClientSessionHandle session,
-            List<IDbCollectionListener<TDocument>> listeners,
-            DbCollectionDefinition<TDocument> definition)
+            List<IMongoSetListener<TDocument>> listeners,
+            MongoSetDefinition<TDocument> definition)
         {
             Context = context;
             Name = definition.Name;
@@ -46,7 +46,7 @@ namespace MongoDB.MongoContext
 
         public async Task InitializeAsync(CancellationToken cancellationToken = default)
         {
-            var processor = new DbCollectionDefinitionProcessor<TDocument>(Collection);
+            var processor = new MongoSetDefinitionProcessor<TDocument>(Collection);
             await processor.InitializeIndices(_indexDefinitions, cancellationToken);
         }
 
@@ -73,45 +73,66 @@ namespace MongoDB.MongoContext
             SaveDocumentsChangesContext<TDocument> context,
             CancellationToken cancellationToken)
         {
-            UpdateTrackedDocumentStates();
+            UpdateTrackedDocuments();
 
-            var pendingEventsSavedContext = new PendingEventsSavedContext<TDocument>(context.PendingEvents);
+            var changesSavedContext = new ChangesSavedContext<TDocument>(context.Mutations);
 
             foreach (var listener in _listeners)
             {
-                await listener.OnEventsSavedAsync(pendingEventsSavedContext, cancellationToken);
+                await listener.OnEventsSavedAsync(changesSavedContext, cancellationToken);
             }
         }
 
-        private void UpdateTrackedDocumentStates()
+        private void UpdateTrackedDocuments()
         {
-            foreach (var trackedDocument in _trackedDocuments)
+            var deletions = new List<(int, BsonDocument)>();
+            
+            for (var index = 0; index < _trackedDocuments.Count; index++)
             {
-                UpdateTrackedDocumentState(trackedDocument.State, trackedDocument);
+                var trackedDocument = _trackedDocuments[index];
+                
+                var document = trackedDocument.Document;
+                var currentState = trackedDocument.State;
+                
+                var updatedState = NextDocumentState(document, currentState);
+                trackedDocument.State = updatedState;
+                
+                if (updatedState == DocumentState.Deleted)
+                {
+                    deletions.Add((index, PrimaryKey(document)));
+                }
+            }
+
+            foreach (var (index, key) in deletions)
+            {
+                _trackedDocuments.RemoveAt(index);
+                _trackedDocumentsById.Remove(key);
             }
         }
 
-        private void UpdateTrackedDocumentState(
-            DocumentState state,
-            TrackedDocument<TDocument> trackedDocument)
+        private DocumentState NextDocumentState(TDocument document, DocumentState currentState)
         {
-            switch (state)
+            switch (currentState)
             {
                 case DocumentState.Deleted:
-                    break;
+                    return currentState;
                 case DocumentState.Added:
                 case DocumentState.Modified:
                 case DocumentState.Unchanged:
-                    trackedDocument.State = DocumentState.Unchanged;
-                    break;
+                    return DocumentState.Unchanged;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(state), state, null);
+                    throw new InvalidOperationException($"The tracked document '{PrimaryKey(document)}' specified an unexpected state '{currentState}'");
             }
         }
 
         public IFindFluent<TDocument> Find(FilterDefinition<TDocument> filter)
         {
             return new TrackingFindFluent<TDocument>(Collection.Find(filter), this);
+        }
+
+        public IFindFluent<TDocument> ToFindFluent()
+        {
+            return Find(FilterDefinition<TDocument>.Empty);
         }
 
         public TDocument Attach(TDocument document)

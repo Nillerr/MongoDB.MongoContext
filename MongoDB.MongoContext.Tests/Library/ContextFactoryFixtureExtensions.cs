@@ -14,7 +14,7 @@ namespace MongoDB.MongoContext.Tests
         public static TContext CreateContext<T, TContext>(
             this ContextFactory<TContext> contextFactory,
             T lifetimeManager,
-            params IDbCollectionListenerFactory[] collectionListenerFactories)
+            params IMongoSetListenerFactory[] collectionListenerFactories)
             where T : IAsyncLifetimeManager
             where TContext : MongoContext
         {

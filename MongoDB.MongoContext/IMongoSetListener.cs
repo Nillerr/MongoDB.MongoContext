@@ -3,10 +3,10 @@ using System.Threading.Tasks;
 
 namespace MongoDB.MongoContext
 {
-    public interface IDbCollectionListener<TDocument>
+    public interface IMongoSetListener<TDocument>
     {
         Task OnEventsSavedAsync(
-            PendingEventsSavedContext<TDocument> context,
+            ChangesSavedContext<TDocument> context,
             CancellationToken cancellationToken = default);
     }
 }

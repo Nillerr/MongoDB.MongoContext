@@ -11,23 +11,25 @@ namespace MongoDB.MongoContext
     public static class FindFluentExtensions
     {
         public static IOrderedFindFluent<TDocument> SortBy<TDocument>(
-            this IFindFluent<TDocument> find,
+            this IFindFluentSource<TDocument> source,
             Expression<Func<TDocument, object>> field)
         {
+            var find = source.ToFindFluent();
             var sort = Builders<TDocument>.Sort.Ascending(field);
             return find.Sort(sort);
         }
 
         public static IOrderedFindFluent<TDocument> SortByDescending<TDocument>(
-            this IFindFluent<TDocument> find,
+            this IFindFluentSource<TDocument> source,
             Expression<Func<TDocument, object>> field)
         {
+            var find = source.ToFindFluent();
             var sort = Builders<TDocument>.Sort.Descending(field);
             return find.Sort(sort);
         }
 
         public static IOrderedFindFluent<TDocument> ThenBy<TDocument>(
-            this IFindFluent<TDocument> find,
+            this IOrderedFindFluent<TDocument> find,
             Expression<Func<TDocument, object>> field)
         {
             var sb = Builders<TDocument>.Sort;
@@ -36,7 +38,7 @@ namespace MongoDB.MongoContext
         }
 
         public static IOrderedFindFluent<TDocument> ThenByDescending<TDocument>(
-            this IFindFluent<TDocument> find,
+            this IOrderedFindFluent<TDocument> find,
             Expression<Func<TDocument, object>> field)
         {
             var sb = Builders<TDocument>.Sort;
@@ -45,9 +47,10 @@ namespace MongoDB.MongoContext
         }
 
         public static async Task<TDocument> FirstAsync<TDocument>(
-            this IFindFluent<TDocument> find,
+            this IFindFluentSource<TDocument> source,
             CancellationToken cancellationToken = default)
         {
+            var find = source.ToFindFluent();
             var cursor = await find.Limit(1).ToCursorAsync(cancellationToken);
 
             await cursor.MoveNextAsync(cancellationToken);
@@ -55,9 +58,10 @@ namespace MongoDB.MongoContext
         }
 
         public static async Task<TDocument?> FirstOrDefaultAsync<TDocument>(
-            this IFindFluent<TDocument> find,
+            this IFindFluentSource<TDocument> source,
             CancellationToken cancellationToken = default)
         {
+            var find = source.ToFindFluent();
             var cursor = await find.Limit(1).ToCursorAsync(cancellationToken);
 
             await cursor.MoveNextAsync(cancellationToken);
@@ -65,9 +69,11 @@ namespace MongoDB.MongoContext
         }
 
         public static async Task<TDocument> SingleAsync<TDocument>(
-            this IFindFluent<TDocument> find,
+            this IFindFluentSource<TDocument> source,
             CancellationToken cancellationToken = default)
         {
+            var find = source.ToFindFluent();
+            
             IAsyncCursor<TDocument> cursor;
             
             if (!find.Options.Limit.HasValue || find.Options.Limit.Value > 2)
@@ -84,9 +90,11 @@ namespace MongoDB.MongoContext
         }
 
         public static async Task<TDocument?> SingleOrDefaultAsync<TDocument>(
-            this IFindFluent<TDocument> find,
+            this IFindFluentSource<TDocument> source,
             CancellationToken cancellationToken = default)
         {
+            var find = source.ToFindFluent();
+            
             IAsyncCursor<TDocument> cursor;
             
             if (!find.Options.Limit.HasValue || find.Options.Limit.Value > 2)
@@ -103,9 +111,11 @@ namespace MongoDB.MongoContext
         }
 
         public static async Task<List<TDocument>> ToListAsync<TDocument>(
-            this IFindFluent<TDocument> find,
+            this IFindFluentSource<TDocument> source,
             CancellationToken cancellationToken = default)
         {
+            var find = source.ToFindFluent();
+            
             var cursor = await find.ToCursorAsync(cancellationToken);
 
             var result = new List<TDocument>();

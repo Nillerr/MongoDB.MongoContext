@@ -6,12 +6,12 @@ using MongoDB.Driver;
 
 namespace MongoDB.MongoContext
 {
-    internal sealed class DbCollectionDefinitionProcessor<TDocument>
+    internal sealed class MongoSetDefinitionProcessor<TDocument>
         where TDocument : IMongoAggregate<TDocument>
     {
         private readonly IMongoCollection<TDocument> _collection;
 
-        public DbCollectionDefinitionProcessor(IMongoCollection<TDocument> collection)
+        public MongoSetDefinitionProcessor(IMongoCollection<TDocument> collection)
         {
             _collection = collection;
         }

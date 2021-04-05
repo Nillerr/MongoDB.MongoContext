@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Driver;
@@ -51,16 +50,21 @@ namespace MongoDB.MongoContext
             return _find;
         }
 
-        public IAsyncCursor<TDocument> ToCursor(CancellationToken cancellationToken = new CancellationToken())
+        public IAsyncCursor<TDocument> ToCursor(CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            var cursor = _find.ToCursor(cancellationToken);
+            return new TrackingAsyncCursor<TDocument>(cursor, _documentTracker);
         }
 
-        public async Task<IAsyncCursor<TDocument>> ToCursorAsync(
-            CancellationToken cancellationToken = new CancellationToken())
+        public async Task<IAsyncCursor<TDocument>> ToCursorAsync(CancellationToken cancellationToken = default)
         {
             var cursor = await _find.ToCursorAsync(cancellationToken);
             return new TrackingAsyncCursor<TDocument>(cursor, _documentTracker);
+        }
+
+        public IFindFluent<TDocument> ToFindFluent()
+        {
+            return this;
         }
     }
 }

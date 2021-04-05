@@ -18,6 +18,8 @@ Provides a context for performing operations on a MongoDB database, enabling tra
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <Authors>nillerr</Authors>
+        <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+        <RepositoryUrl>https://github.com/Nillerr/MongoDB.MongoContext</RepositoryUrl>
     </PropertyGroup>
 
     <ItemGroup>

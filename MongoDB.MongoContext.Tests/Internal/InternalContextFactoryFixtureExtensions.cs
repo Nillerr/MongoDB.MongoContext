@@ -14,7 +14,7 @@ namespace MongoDB.MongoContext.Tests
         public static TContext CreateUnmanagedContext<TContext>(
             this ContextFactory<TContext> contextFactory,
             string name,
-            params IDbCollectionListenerFactory[] collectionListenerFactories)
+            params IMongoSetListenerFactory[] collectionListenerFactories)
             where TContext : MongoContext
         {
             var contextFixture = contextFactory.CreateContextFixture(name, collectionListenerFactories);

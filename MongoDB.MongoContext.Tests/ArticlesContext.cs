@@ -37,6 +37,6 @@ namespace MongoDB.MongoContext.Tests
                 .ToDbCollection();
         }
 
-        public IDbCollection<Article> Articles { get; }
+        public IMongoSet<Article> Articles { get; }
     }
 }

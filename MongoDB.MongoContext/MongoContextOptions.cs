@@ -6,7 +6,7 @@ namespace MongoDB.MongoContext
 {
     public sealed class MongoContextOptions
     {
-        public delegate IDbCollectionListenerFactory ListenerFactory(IServiceProvider serviceProvider);
+        public delegate IMongoSetListenerFactory ListenerFactory(IServiceProvider serviceProvider);
 
         public List<ListenerFactory> Listeners { get; } = new();
 
@@ -16,7 +16,7 @@ namespace MongoDB.MongoContext
         }
 
         public void AddListener<T>()
-            where T : class, IDbCollectionListenerFactory
+            where T : class, IMongoSetListenerFactory
         {
             Listeners.Add(serviceProvider => ActivatorUtilities.CreateInstance<T>(serviceProvider));
         }

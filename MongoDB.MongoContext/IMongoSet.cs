@@ -4,14 +4,14 @@ using MongoDB.Driver;
 
 namespace MongoDB.MongoContext
 {
-    internal interface IDbCollection
+    internal interface IMongoSet
     {
         Task InitializeAsync(CancellationToken cancellationToken = default);
         
         Task<AsyncDelegate> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 
-    public interface IDbCollection<TDocument>
+    public interface IMongoSet<TDocument> : IFindFluentSource<TDocument>
     {
         string Name { get; }
 

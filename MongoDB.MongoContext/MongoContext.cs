@@ -10,11 +10,11 @@ namespace MongoDB.MongoContext
 {
     public abstract class MongoContext
     {
-        private readonly ConcurrentDictionary<string, IDbCollection> _collectionContexts = new();
+        private readonly ConcurrentDictionary<string, IMongoSet> _collectionContexts = new();
         
         private readonly IMongoDatabase _database;
         private readonly IClientSessionHandle _session;
-        private readonly IReadOnlyList<IDbCollectionListenerFactory> _collectionListenerFactories;
+        private readonly IReadOnlyList<IMongoSetListenerFactory> _collectionListenerFactories;
 
         protected MongoContext(DatabaseContextOptions options)
         {
@@ -23,7 +23,7 @@ namespace MongoDB.MongoContext
             _collectionListenerFactories = options.CollectionListenerFactories;
         }
 
-        internal IMongoDatabase Database => _database;
+        public IMongoDatabase Database => _database;
 
         public async Task InitializeAsync(CancellationToken cancellationToken = default)
         {
@@ -33,24 +33,24 @@ namespace MongoDB.MongoContext
             }
         }
 
-        protected virtual DbCollectionDefinition<TDocument> Collection<TDocument>(
+        protected MongoSetDefinition<TDocument> Collection<TDocument>(
             string name,
             PrimaryKeyFilterSelector<TDocument> primaryKeyFilterSelector)
             where TDocument : IMongoAggregate<TDocument>
         {
-            return new DbCollectionDefinition<TDocument>(this, name, primaryKeyFilterSelector);
+            return new MongoSetDefinition<TDocument>(this, name, primaryKeyFilterSelector);
         }
 
-        internal virtual IDbCollection<TDocument> GetCollection<TDocument>(DbCollectionDefinition<TDocument> definition)
+        internal IMongoSet<TDocument> GetCollection<TDocument>(MongoSetDefinition<TDocument> definition)
             where TDocument : IMongoAggregate<TDocument>
         {
-            IDbCollection collection = _collectionContexts.GetOrAdd(definition.Name, CreateCollection, definition);
-            return (IDbCollection<TDocument>) collection;
+            IMongoSet collection = _collectionContexts.GetOrAdd(definition.Name, CreateCollection, definition);
+            return (IMongoSet<TDocument>) collection;
         }
 
-        private DbCollection<TDocument> CreateCollection<TDocument>(
+        private MongoSet<TDocument> CreateCollection<TDocument>(
             string name,
-            DbCollectionDefinition<TDocument> definition)
+            MongoSetDefinition<TDocument> definition)
             where TDocument : IMongoAggregate<TDocument>
         {
             var collection = _database.GetCollection<TDocument>(name);
@@ -59,7 +59,7 @@ namespace MongoDB.MongoContext
                 .Select(factory => factory.CreateListener<TDocument>(name))
                 .ToList();
             
-            var collectionContext = new DbCollection<TDocument>(this, collection, _session, listeners, definition);
+            var collectionContext = new MongoSet<TDocument>(this, collection, _session, listeners, definition);
             return collectionContext;
         }
 

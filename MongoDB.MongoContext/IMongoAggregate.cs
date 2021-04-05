@@ -5,6 +5,6 @@ namespace MongoDB.MongoContext
     public interface IMongoAggregate<TAggregate>
         where TAggregate : IMongoAggregate<TAggregate>
     {
-        IReadOnlyCollection<IPendingEvent<TAggregate>> DequeuePendingEvents();
+        IReadOnlyCollection<IMutation<TAggregate>> DequeueMutations();
     }
 }
